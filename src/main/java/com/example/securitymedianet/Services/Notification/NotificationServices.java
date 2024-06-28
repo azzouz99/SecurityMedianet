@@ -29,8 +29,9 @@ public class NotificationServices implements INotificationServices {
 
         for (Article article : articles) {
             Project project = article.getProject();
-            if (project.getType().equals("DRUPAL")) {
-                Map<String, Object> map = articleService.predict(article.getId());
+            if ((project.getType().equals("DRUPAL"))&&(!article.getRessources().equals("Gestion et coordination du projet"))&&(!article.getRessources().equals("Analyste concepteur"))) {
+            Map<String,Object> map=articleService.predict(article.getId());
+
 
 
                 if (article.getAttérissage() > ((Number) map.get("prediction")).floatValue()) {
@@ -57,9 +58,9 @@ public class NotificationServices implements INotificationServices {
                 if (article.getJ_Vendus() < ((Number) map.get("prediction")).floatValue()) {
                     Notification notification = new Notification();
                     notification.setTitle("Risque de perte");
-                    notification.setDescription("Votre " + project.getName() + "de type " + project.getType() + " à un risque de perte" +
-                            " dans l'article " + article.getRessources() + "puisque on a prédicté que il a besoin de" + ((Number) map.get("prediction")).floatValue() + " Jours" +
-                            "mais on a vendu que " + article.getJ_Vendus()+" Jours");
+                    notification.setDescription("Votre " + project.getName() + " de type " + project.getType() + " à un risque de perte" +
+                            " dans l'article " + article.getRessources() + " puisque on a prédicté que il a besoin de " + ((Number) map.get("prediction")).floatValue() + " Jours" +
+                            " mais on a vendu que " + article.getJ_Vendus()+" Jours.");
                     notification.setDegree(NotificationDegree.Warning);
                     notificationRepository.save(notification);
 
