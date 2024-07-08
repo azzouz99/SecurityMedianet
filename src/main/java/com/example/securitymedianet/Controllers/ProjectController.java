@@ -2,6 +2,7 @@ package com.example.securitymedianet.Controllers;
 
 import com.example.securitymedianet.Entites.Project;
 import com.example.securitymedianet.Entites.ProjectStatus;
+import com.example.securitymedianet.Services.Project.IProjectServices;
 import com.example.securitymedianet.Services.Project.ProjectServices;
 import lombok.RequiredArgsConstructor;
 import org.apache.xmlrpc.XmlRpcException;
@@ -17,7 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ProjectController {
 
-    private final ProjectServices  projectServices;
+    private final IProjectServices projectServices;
 
     @GetMapping("/odoo")
     public List<Project> getAllProjects() throws MalformedURLException, XmlRpcException {
@@ -40,7 +41,7 @@ public class ProjectController {
     }
     @GetMapping("/bystatus/{status}")
     public List<Project> getProjectsByStatus(@PathVariable ProjectStatus status){
-        return projectServices.getbyStatus(status);
+        return projectServices.getProjectByStatus(status);
     }
     @GetMapping("/all")
     public List<Project> allProjects() {
@@ -56,12 +57,17 @@ public class ProjectController {
     }
     @GetMapping("/bytype/{type}")
     public List<Project> getProjectsByType(@PathVariable("type") String type){
-        return projectServices.getbyType(type);
+        return projectServices.getProjectByType(type);
     }
 
     @GetMapping("/productivity")
     public Map<String,Object> getProjectsByProductivity(){
         return projectServices.getAllProjectProductivity();
+    }
+
+    @GetMapping("/typeastatus/{type}/{status}")
+    public List<Project> findByTypeAStatus(@PathVariable("type") String type,@PathVariable("status") ProjectStatus status){
+        return projectServices.findByTypeAndStatus(type,status);
     }
 
 }

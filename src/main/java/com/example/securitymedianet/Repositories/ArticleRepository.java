@@ -1,5 +1,6 @@
 package com.example.securitymedianet.Repositories;
 
+import com.example.securitymedianet.Entites.Analyse.ArticleAnalysis;
 import com.example.securitymedianet.Entites.Article;
 import com.example.securitymedianet.Entites.ArticleStatus;
 import com.example.securitymedianet.Entites.Project;
@@ -19,5 +20,13 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
     List<Article> findByStatus(ArticleStatus status);
 
     Article findByRessourcesAndProject(String ressources, Project project);
+
+
+
+
+    @Query("SELECT new com.example.securitymedianet.Entites.Analyse.ArticleAnalysis(a.ressources, SUM(a.Marge_en_montant), SUM(a.Budget_Additionnel)) " +
+            "FROM Article a GROUP BY a.ressources")
+    List<ArticleAnalysis> findArticleSummaries();
+
 
 }

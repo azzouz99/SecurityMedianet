@@ -11,9 +11,9 @@ import java.util.Map;
 public interface IProjectServices {
     Project updateProject(Project project);
 
-    List<Project> getbyStatus(ProjectStatus status);
+    List<Project> getProjectByStatus(ProjectStatus status);
 
-    List<Project> getbyType(String type);
+    List<Project> getProjectByType(String type);
 
     List<Project> getAllProjects();
 
@@ -31,4 +31,6 @@ public interface IProjectServices {
     Map<String,Object> getProjectArticlesConsumedHours(Integer id);
 
     Map<String,Object> getAllProjectProductivity();
+
+    List<Project> findByTypeAndStatus(String type, ProjectStatus status);
 }

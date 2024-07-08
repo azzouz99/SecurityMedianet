@@ -1,5 +1,6 @@
 package com.example.securitymedianet.Entites;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,10 +26,12 @@ public class Project {
     private String name;
     private String Chef_de_projet;
     private String type;
+    @Enumerated(EnumType.STRING)
     private ProjectStatus status;
 
     @OneToOne
     private User client;
+    @JsonIgnore
     @OneToMany
     private List<Article> articles;
 

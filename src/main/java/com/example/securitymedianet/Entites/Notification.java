@@ -1,9 +1,7 @@
 package com.example.securitymedianet.Entites;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,9 +15,26 @@ import lombok.NoArgsConstructor;
 @Table(name = "notification")
 public class Notification {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String title;
+    @Column(length = 510)
     private String description;
-    private NotificationDegree degree;
+    private NotificationDegree productivity;
+    private NotificationDegree profitability;
+    @OneToOne(mappedBy = "notification")
+    @JsonIgnore
+    private Article article;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        if (description != null && description.length() > 255) {
+            this.description = description.substring(0, 255);
+        } else {
+            this.description = description;
+        }
+    }
 }

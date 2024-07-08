@@ -1,21 +1,28 @@
 package com.example.securitymedianet.Services.Article;
+import com.example.securitymedianet.Repositories.NotificationRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.example.securitymedianet.Entites.Article;
-import com.example.securitymedianet.Entites.ArticleStatus;
-import com.example.securitymedianet.Entites.Project;
-import com.example.securitymedianet.Entites.ProjectStatus;
+import com.example.securitymedianet.Entites.*;
+import com.example.securitymedianet.Entites.Analyse.ArticleAnalysis;
 import com.example.securitymedianet.Repositories.ArticleRepository;
 import com.example.securitymedianet.Repositories.ProjectRepository;
 import com.example.securitymedianet.Services.Flask.FlaskServices;
 import com.example.securitymedianet.Services.Project.IProjectServices;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class ArticleService implements IArticleService{
@@ -25,6 +32,8 @@ public class ArticleService implements IArticleService{
     private ArticleRepository articleRepository;
     @Autowired
     private ProjectRepository projectRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
     @Autowired
     private FlaskServices flaskServices;
     @Autowired
@@ -44,6 +53,14 @@ public class ArticleService implements IArticleService{
     @Override
     public List<Article> getAllArticles(){
         return articleRepository.findAll();
+    }
+    @Override
+    public Long countArticles(){
+        return articleRepository.count();
+    }
+    @Override
+    public Long countArticlesByStatus(ArticleStatus status){
+        return articleRepository.countArticlesByStatus(status);
     }
     @Override
     public Map<String,Object> predictArticlesInprojectdrupal(Integer projectID){
@@ -110,6 +127,7 @@ public class ArticleService implements IArticleService{
        }
         return map;
     }
+    @Override
     public Map<String,Object> predictArticlesInAllprojectdrupal(){
     List<Project> projects=projectRepository.findByType("DRUPAL");
     Map<String,Object> map=new HashMap<>();
@@ -257,4 +275,167 @@ public class ArticleService implements IArticleService{
 return map;
 
     }
+
+    @Override
+    public void exportHeaders(HttpServletResponse response) throws IOException {
+        String[] headers = {"Projet", "Chef de projet", "Type de projet", "Date début", "Date fin ", "Ressources", "J/H Vendus", "Coût unitaire", "Consommés(H)", "Consommés(J)", "J/H Restant", "RAF", "Budget Additionnel ", "Attérissage", "Marge", "Budget", "Couts", "Marge en montant", "Marge en %"};
+
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Articles");
+
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            headerRow.createCell(i).setCellValue(headers[i]);
+        }
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=headers.xlsx");
+        workbook.write(response.getOutputStream());
+        workbook.close();
+    }
+    @Override
+    public ResponseEntity<?> uploadFile(@org.jetbrains.annotations.NotNull MultipartFile file) {
+        if (file.isEmpty()) {
+            return new ResponseEntity<>("Please upload a file!", HttpStatus.BAD_REQUEST);
+        }
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            String[] expectedHeaders = {"Projet", "Chef de projet", "Type de projet", "Date début", "Date fin ", "Ressources", "J/H Vendus", "Coût unitaire", "Consommés(H)", "Consommés(J)", "J/H Restant", "RAF", "Budget Additionnel ", "Attérissage", "Marge", "Budget", "Couts", "Marge en montant", "Marge en %"};
+
+            Row firstRow = sheet.getRow(0);
+            if (firstRow == null) {
+                return new ResponseEntity<>("File does not contain headers!", HttpStatus.BAD_REQUEST);
+            }
+
+            for (int i = 0; i < expectedHeaders.length; i++) {
+                Cell cell = firstRow.getCell(i);
+                if (cell == null || !expectedHeaders[i].equals(getStringCellValue(cell))) {
+                    logger.error("Header mismatch at column {}: Expected '{}', Found '{}'", i, expectedHeaders[i], getStringCellValue(cell));
+                    return new ResponseEntity<>("Please upload a file that matches the structure!", HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null || row.getCell(0) == null || row.getCell(0).getCellType() == CellType.BLANK) {
+                    return  ResponseEntity.ok("File uploaded and data saved!"); // Skip empty rows
+                }
+                Article article = new Article();
+                article.setDate_début(getDateCellValue(row.getCell(3)));
+                article.setDate_fin(getDateCellValue(row.getCell(4)));
+                article.setRessources(getStringCellValue(row.getCell(5)));
+                article.setJ_Vendus(getNumericCellValue(row.getCell(6)));
+                article.setCoût_unitaire(getNumericCellValue(row.getCell(7)));
+                article.setConsommés_H(getNumericCellValue(row.getCell(8)));
+                article.setConsommés_J(getNumericCellValue(row.getCell(9)));
+                article.setJ_Restant(getNumericCellValue(row.getCell(10)));
+                article.setRAF(getNumericCellValue(row.getCell(11)));
+                if (article.getRAF() == 0) {
+                    article.setStatus(ArticleStatus.COMPLETED);
+                } else {
+                    article.setStatus(ArticleStatus.IN_PROGRESS);
+                }
+                article.setBudget_Additionnel(getNumericCellValue(row.getCell(12)));
+                article.setAttérissage(getNumericCellValue(row.getCell(13)));
+                article.setMarge(getNumericCellValue(row.getCell(14)));
+                article.setBudget(getNumericCellValue(row.getCell(15)));
+                article.setCouts(getNumericCellValue(row.getCell(16)));
+                article.setMarge_en_montant(getNumericCellValue(row.getCell(17)));
+                article.setMarge_en_percent(getNumericCellValue(row.getCell(18)));
+                String projectName = getStringCellValue(row.getCell(0));
+                Project project = projectRepository.findByName(projectName);
+                if (project == null) {
+                    project = new Project();
+                    project.setName(projectName);
+                    project.setChef_de_projet(getStringCellValue(row.getCell(1)));
+                    project.setType(getStringCellValue(row.getCell(2)));
+                    project.setDate_début(getDateCellValue(row.getCell(3)));
+                    project.setDate_fin(getDateCellValue(row.getCell(4)));
+                    article.setProject(project);
+                    projectRepository.save(project);
+                }
+                article.setProject(project);
+                articleRepository.save(article);
+                List<Article> existingArticles = project.getArticles();
+                if (existingArticles == null) {
+                    existingArticles = new ArrayList<>();
+                    project.setArticles(existingArticles);
+                }
+
+                boolean articleExists = false;
+                for (Article existingArticle : existingArticles) {
+                    if (existingArticle.getRessources().equals(article.getRessources())) {
+                        existingArticles.remove(existingArticle);
+                        articleRepository.delete(existingArticle);
+                        articleExists = true;
+                        break;
+                    }
+                }
+
+                if (!articleExists) {
+                    existingArticles.add(article);
+                }
+                projectRepository.save(project);
+            }
+
+
+            return ResponseEntity.ok("File uploaded and data saved!");
+
+        } catch (IOException e) {
+            return new ResponseEntity<>("Failed to read the Excel file!", HttpStatus.INTERNAL_SERVER_ERROR);}
+    }
+    private Date getDateCellValue(Cell cell) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) {
+            return null;
+        }
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return cell.getDateCellValue();
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                return new SimpleDateFormat("yyyy-MM-dd").parse(cell.getStringCellValue());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+    private String getStringCellValue(Cell cell) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) {
+            return null;
+        }
+        return cell.getCellType() == CellType.STRING ? cell.getStringCellValue() : String.valueOf(cell.getNumericCellValue());
+    }
+    private float getNumericCellValue(Cell cell) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) {
+            return 0;
+        }
+        return (float) cell.getNumericCellValue();
+    }
+    @Override
+    public String getProjectNamebyArticle(Integer articleID){
+        Article article=articleRepository.findById(articleID).orElse(null);
+        return article.getProject().getName();
+
+    }
+    @Override
+    public List<Article> findByStatusAndProject(ArticleStatus status, Integer projectID) {
+      Project project=  projectRepository.findById(projectID).orElse(null);
+      return articleRepository.findByStatusAndProject(status, project);
+    }
+@    Override
+    public List<ArticleAnalysis> findArticleSummaries() {
+        return articleRepository.findArticleSummaries();
+    }
+    @Override
+    @Transactional
+    public void deleteAllData() {
+        // Delete all articles and associated notifications
+        notificationRepository.deleteAll();
+        articleRepository.deleteAll();
+
+        // Delete all projects
+        projectRepository.deleteAll();
+    }
+
 }

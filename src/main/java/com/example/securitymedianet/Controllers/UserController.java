@@ -4,6 +4,7 @@ import com.example.securitymedianet.Entites.User;
 
 import com.example.securitymedianet.Repositories.UserRepository;
 import com.example.securitymedianet.Services.FileStorageService;
+import com.example.securitymedianet.Services.User.IUserServices;
 import com.example.securitymedianet.Services.User.UserServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,8 @@ import java.util.List;
 public class UserController {
     @Autowired
     private UserRepository userRepository;
-
-    private UserServices userServices;
+    @Autowired
+    private IUserServices userServices;
     @Autowired
     private FileStorageService fileStorageService;
     @PostMapping("/upload")
@@ -41,8 +42,7 @@ public class UserController {
     @PutMapping("/assign/role/{email}/{role}")
     public ResponseEntity<Void> assignRoleToUser(@PathVariable String email, @PathVariable String role) {
         userServices.assignRoleToUser(email, role);
-        return ResponseEntity.ok().build();
-    }
+        return ResponseEntity.ok().build();}
 
 
 }
