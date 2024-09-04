@@ -2,6 +2,7 @@ package com.example.securitymedianet.Services.Project;
 
 import com.example.securitymedianet.Entites.*;
 import com.example.securitymedianet.Repositories.ArticleRepository;
+import com.example.securitymedianet.Repositories.NotificationRepository;
 import com.example.securitymedianet.Repositories.ProjectRepository;
 import com.example.securitymedianet.Repositories.UserRepository;
 import com.example.securitymedianet.Services.Article.ArticleService;
@@ -33,6 +34,9 @@ public class ProjectServices implements IProjectServices {
 
     @Autowired
     private ArticleRepository articleService;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
 
     @Override
@@ -132,12 +136,15 @@ public class ProjectServices implements IProjectServices {
         List<Article> articles=articleService.findAll();
         Float lost_day=0F;
         Float win_day=0F;
+
         Long project_number=projectRepository.count();
         Long article_number=articleService.count();
         Long inprogress_project=projectRepository.countProjectsByStatus(ProjectStatus.INPROGRESS);
         Long completed_project=projectRepository.countProjectsByStatus(ProjectStatus.COMPLETED);
         Long inprogress_articles=articleService.countArticlesByStatus(ArticleStatus.IN_PROGRESS);
         Long completed_articles=articleService.countArticlesByStatus(ArticleStatus.COMPLETED);
+        List<Notification> notificationList=notificationRepository.findByStatus(StatusNotif.NOT_YET);
+        Integer nbrdes=notificationList.size();
         Float couts=0.0f;
         Float perte=0.0f;
         Float budget=0.0f;
@@ -167,7 +174,7 @@ public class ProjectServices implements IProjectServices {
         map.put("budget",budget);
         map.put("marge",budget-couts);
         map.put("perte",perte);
-
+        map.put("decision",nbrdes);
         Float perte_of_win=((budget-couts)/couts)*100;
         String formattedNumber = String.format("%.2f", perte_of_win);
         map.put("percent of win",formattedNumber);

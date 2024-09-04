@@ -16,25 +16,21 @@ import java.util.Map;
 public interface IArticleService {
     void updateStatus();
 
-    List<Article> getAllArticles();
+    List<Article> getArticles();
 
-    Long countArticles();
+    Map<String, Object> predictArticlesInprojectdrupal(Integer projectID);
 
-    Long countArticlesByStatus(ArticleStatus status);
-
-    Map<String,Object> predictArticlesInprojectdrupal(Integer projectID);
-
-    Map<String,Object> predictArticlesInAllprojectdrupal();
+    Map<String, Object> predictArticlesInAllprojectdrupal();
 
     List<Article> findByStatus(ArticleStatus status);
 
-    Map<String,Object> findByInprogressDrupal();
+    Map<String, Object> findByInprogressDrupal();
 
-    Map<String,Object> articleTrackingInproject();
+    Map<String, Object> articleTrackingInproject();
 
     Article findByTitleAndProject(String title, Integer projectID);
 
-    Map<String,Object> predict(Integer articleID);
+    Map<String, Object> predict(Integer articleID);
 
     void exportHeaders(HttpServletResponse response) throws IOException;
 
@@ -42,11 +38,7 @@ public interface IArticleService {
 
     String getProjectNamebyArticle(Integer articleID);
 
-    List<Article> findByStatusAndProject(ArticleStatus status, Integer projectID);
-
-
-
-    List<ArticleAnalysis> findArticleSummaries();
+    List<ArticleAnalysis> findArticleDetails();
 
     @Transactional
     void deleteAllData();

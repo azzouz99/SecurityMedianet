@@ -38,9 +38,7 @@ public class ArticleController {
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
         ResponseEntity<?> response=articleService.uploadFile(file);
         projectServices.checkStatus();
-        notificationServices.checkPerformance();
-        notificationServices.checkRentability(20f);
-        notificationServices.checkInprogress();
+        notificationServices.articleScan();
      return response;
     }
     @PostMapping("/status")
@@ -79,7 +77,7 @@ public class ArticleController {
 
     @GetMapping("/article-analysis")
     public List<ArticleAnalysis> findArticleSummaries() {
-        return articleService.findArticleSummaries();
+        return articleService.findArticleDetails();
     }
 
     @DeleteMapping("/clear")

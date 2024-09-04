@@ -9,9 +9,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Integer> {
     Project findByName(String name);
+
     List<Project> findProjectsByStatus(ProjectStatus status);
 
     @Query("SELECT COUNT(p) FROM Project p WHERE p.status = :status")
@@ -19,5 +21,5 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
     List<Project> findByType(String type);
 
-    List<Project> findByTypeAndStatus(String type,ProjectStatus status);
+    List<Project> findByTypeAndStatus(String type, ProjectStatus status);
 }

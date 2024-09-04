@@ -28,5 +28,14 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
             "FROM Article a GROUP BY a.ressources")
     List<ArticleAnalysis> findArticleSummaries();
 
-
+    @Query("SELECT new com.example.securitymedianet.Entites.Analyse.ArticleAnalysis(" +
+            "a.ressources, " +
+            "SUM(a.Marge_en_montant), " +
+            "SUM(a.Budget_Additionnel), " +
+            "(SUM(a.Marge_en_percent) / COUNT(a)), " +
+            "CASE WHEN SUM(a.j_Vendus) = 0 THEN 0 ELSE SUM(a.j_Vendus) / SUM(a.attérissage) END" +
+            ") " +
+            "FROM Article a " +
+            "GROUP BY a.ressources")
+    List<ArticleAnalysis> findArticleDetails();
 }

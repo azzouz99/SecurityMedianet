@@ -1,20 +1,22 @@
 package com.example.securitymedianet.Services.Flask;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class FlaskServices implements IFlaskServices {
     @Autowired
     private RestTemplate restTemplate;
-
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public Map<String, Object> predictAll(float analysteConcepteur, float gestionCoordination) {
@@ -171,6 +173,30 @@ public class FlaskServices implements IFlaskServices {
         ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
 
         // Return the response body
+        return response.getBody();
+    }
+    @Override
+    public Map<String, Object> predictCost(String requestData) {
+        String url = "http://127.0.0.1:5000/predict/cost";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        List<Map<String, Object>> requestDataList;
+        try {
+            requestDataList = objectMapper.readValue(requestData, new TypeReference<List<Map<String, Object>>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse request data", e);
+        }
+
+        HttpEntity<List<Map<String, Object>>> entity = new HttpEntity<>(requestDataList, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                Map.class
+        );
+
         return response.getBody();
     }
 }

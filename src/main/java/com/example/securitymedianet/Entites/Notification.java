@@ -22,6 +22,8 @@ public class Notification {
     private String description;
     private NotificationDegree productivity;
     private NotificationDegree profitability;
+    @Enumerated(EnumType.STRING)
+    private StatusNotif status;
     @OneToOne(mappedBy = "notification")
     @JsonIgnore
     private Article article;

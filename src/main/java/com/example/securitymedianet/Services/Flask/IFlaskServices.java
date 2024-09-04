@@ -1,5 +1,6 @@
 package com.example.securitymedianet.Services.Flask;
 
+import java.util.List;
 import java.util.Map;
 
 public interface IFlaskServices {
@@ -18,4 +19,6 @@ public interface IFlaskServices {
     Map<String, Object> predictInfographie(float analysteConcepteur, float insertion_contenu);
 
     Map<String, Object> predictFormation(float gestionCoordination);
+
+    Map<String, Object> predictCost(String requestData);
 }

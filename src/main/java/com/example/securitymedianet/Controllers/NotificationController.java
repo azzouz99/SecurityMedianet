@@ -3,6 +3,7 @@ package com.example.securitymedianet.Controllers;
 
 import com.example.securitymedianet.Entites.Article;
 import com.example.securitymedianet.Entites.Notification;
+import com.example.securitymedianet.Entites.StatusNotif;
 import com.example.securitymedianet.Services.Notification.INotificationServices;
 import com.example.securitymedianet.Services.Notification.NotificationServices;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationController {
     private final INotificationServices services;
+
+    @GetMapping("/status/{status}")
+    public List<Notification> getNotificationByStatus(@PathVariable("status") StatusNotif status) {
+        return services.FindByStatus(status);
+    }
 @GetMapping("/article/{id}")
 public Article getArticle(@PathVariable Long id) {
     return services.getArticle(id);
@@ -49,5 +55,10 @@ public Article getArticle(@PathVariable Long id) {
     @GetMapping("/performance/completed")
     public Map<String, Object> getPerformanceCompleted(){
     return services.getPerformanceCompleted();
+    }
+
+    @GetMapping("/decisions")
+    public Map<String, List<Notification>> findForDecisions(){
+        return services.findDecisions();
     }
 }
